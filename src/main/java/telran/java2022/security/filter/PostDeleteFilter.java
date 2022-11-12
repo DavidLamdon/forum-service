@@ -16,12 +16,16 @@ import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 import telran.java2022.accounting.dao.UserAccountRepository;
 import telran.java2022.accounting.model.UserAccount;
+import telran.java2022.post.dao.PostRepository;
+import telran.java2022.post.dto.exceptions.PostNotFoundException;
+import telran.java2022.post.model.Post;
 
 @Component
 @RequiredArgsConstructor
-@Order(30)
-public class UserDeleteFilter implements Filter {
+@Order(60)
+public class PostDeleteFilter implements Filter {
 	final UserAccountRepository userAccountRepository;
+	final PostRepository postRepository;
 
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
@@ -30,9 +34,10 @@ public class UserDeleteFilter implements Filter {
 		HttpServletResponse response = (HttpServletResponse) resp;
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
 			UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
-			
-			if (!request.getServletPath().matches("/account/user/" + userAccount.getLogin() + "/?") 
-					&& !userAccount.getRoles().contains("Administrator".toUpperCase())) {
+			String[] arr = request.getServletPath().split("/");
+			Post post = postRepository.findById(arr[3]).orElseThrow(() -> new PostNotFoundException());
+			if (!userAccount.getLogin().equals(post.getAuthor())
+					&& !userAccount.getRoles().contains("Moderator".toUpperCase())) {
 				response.sendError(403);
 				return;
 			}
@@ -41,7 +46,7 @@ public class UserDeleteFilter implements Filter {
 	}
 
 	private boolean checkEndPoint(String method, String servletPath) {
-		return "DELETE".equalsIgnoreCase(method) && servletPath.matches("/account/user/\\w+/?");
+		return "DELETE".equalsIgnoreCase(method) && servletPath.matches("/forum/post/\\w+/?");
 	}
 
 }

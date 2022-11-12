@@ -19,20 +19,19 @@ import telran.java2022.accounting.model.UserAccount;
 
 @Component
 @RequiredArgsConstructor
-@Order(30)
-public class UserDeleteFilter implements Filter {
+@Order(40)
+public class PostAddPostFilter implements Filter {
 	final UserAccountRepository userAccountRepository;
 
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
 			throws IOException, ServletException {
+
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
 			UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
-			
-			if (!request.getServletPath().matches("/account/user/" + userAccount.getLogin() + "/?") 
-					&& !userAccount.getRoles().contains("Administrator".toUpperCase())) {
+			if (!request.getServletPath().matches("/forum/post/" + userAccount.getLogin() + "/?")) {
 				response.sendError(403);
 				return;
 			}
@@ -41,7 +40,7 @@ public class UserDeleteFilter implements Filter {
 	}
 
 	private boolean checkEndPoint(String method, String servletPath) {
-		return "DELETE".equalsIgnoreCase(method) && servletPath.matches("/account/user/\\w+/?");
+		return "POST".equalsIgnoreCase(method) && servletPath.matches("/forum/post/\\w+/?");
 	}
 
 }
