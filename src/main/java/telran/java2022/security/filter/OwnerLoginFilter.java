@@ -1,6 +1,7 @@
 package telran.java2022.security.filter;
 
 import java.io.IOException;
+import java.security.Principal;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -14,33 +15,34 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
-import telran.java2022.accounting.dao.UserAccountRepository;
-import telran.java2022.accounting.model.UserAccount;
 
 @Component
 @RequiredArgsConstructor
-@Order(40)
-public class PostAddPostFilter implements Filter {
-	final UserAccountRepository userAccountRepository;
-
+@Order(30)
+public class OwnerLoginFilter implements Filter {
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
 			throws IOException, ServletException {
-
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
-		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
-			UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
-			if (!request.getServletPath().matches("/forum/post/" + userAccount.getLogin() + "/?")) {
+		String path = request.getServletPath();
+		if (checkEndPoints(request.getMethod(), request.getServletPath())) {
+			Principal principal = request.getUserPrincipal();
+			String[] arr = path.split("/");
+			String user = arr[arr.length - 1];
+			if (!user.equals(principal.getName())) {
 				response.sendError(403);
 				return;
 			}
 		}
 		chain.doFilter(request, response);
+
 	}
 
-	private boolean checkEndPoint(String method, String servletPath) {
-		return "POST".equalsIgnoreCase(method) && servletPath.matches("/forum/post/\\w+/?");
+	private boolean checkEndPoints(String method, String servletPath) {
+		return servletPath.matches("/account/user/\\w+/?") || servletPath.matches("/forum/post/\\w+/comment/\\w+/?")
+				|| (servletPath.matches("/forum/post/\\w+/?") && "Post".equalsIgnoreCase(method));
+
 	}
 
 }
