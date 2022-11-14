@@ -40,7 +40,11 @@ public class AuthenticationFilter implements Filter {
 		HttpServletResponse response = (HttpServletResponse) resp;
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
 			String sessionId = request.getSession().getId();
-			UserAccount userAccount = sessionService.getUser(sessionId);
+			UserAccount userAccount;
+			if (request.getHeader("Authorization")!=null) {
+				sessionId = request.getSession().getId();
+			}
+			userAccount = sessionService.getUser(sessionId);
 			if(userAccount==null) {
 				String token = request.getHeader("Authorization");
 				if(token == null) {
